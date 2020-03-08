@@ -6,5 +6,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 RUN mkdir -p /etc/dkimkeys && chmod 700 /etc/dkimkeys
 
 COPY opendkim/entrypoint.sh /entrypoint.sh
+COPY opendkim/rsyslog.conf /etc/rsyslog.conf
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
