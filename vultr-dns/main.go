@@ -8,11 +8,17 @@ import (
 	"github.com/miekg/dns"
 )
 
-const (
-	envVarName = "VULTR_API_KEY"
-)
+func mandatoryEnvVar(name string) string {
+	value := os.Getenv(name)
+	if value == "" {
+		log.Fatalf("environment variable %q must be set", name)
+	}
+	return value
+}
 
-var apiKey = os.Getenv(envVarName)
+var apiKey = mandatoryEnvVar("VULTR_API_KEY")
+var parentDomain = mandatoryEnvVar("VULTR_PARENT_DOMAIN")
+var tsigSecret = mandatoryEnvVar("TSIG_SECRET")
 
 func registerDNSHandler(v *vultr.Client) {
 	domains, err := v.GetDNSDomains()
@@ -26,13 +32,11 @@ func registerDNSHandler(v *vultr.Client) {
 }
 
 func main() {
-	if apiKey == "" {
-		log.Fatalf("environment variable %q must be set", envVarName)
-	}
+	handler := &handler{vultr.NewClient(apiKey, nil)}
+	dns.Handle(parentDomain, handler)
 
-	registerDNSHandler(vultr.NewClient(apiKey, nil))
-
-	server := &dns.Server{Addr: ":8053", Net: "udp", TsigSecret: nil, ReusePort: true}
+	t := map[string]string{"burgerdev-de-secret.": tsigSecret}
+	server := &dns.Server{Addr: ":8053", Net: "udp", TsigSecret: t, ReusePort: true}
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("stopped serving dns: %v", err)
 	}
