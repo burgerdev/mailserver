@@ -1,5 +1,7 @@
 
-include secrets/env
+ifeq (run,$(MAKECMDGOALS))
+  include secrets/env
+endif
 
 SOURCES=main.go lib.go
 
