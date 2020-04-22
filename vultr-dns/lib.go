@@ -32,7 +32,7 @@ func (h *handler) doSomething() {
 }
 
 func (h *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
-	log.Printf("new request from %s", w.RemoteAddr())
+  log.Printf("new request from %s: dns.Msg%+v", w.RemoteAddr(), *r)
 
 	tsig := r.IsTsig()
 	if tsig == nil {
@@ -48,13 +48,13 @@ func (h *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		fail(w, r)
 		return
 	}
-	m := new(dns.Msg)
-	m.SetReply(r)
-	m.SetTsig(tsig.Hdr.Name, tsig.Algorithm, 300, time.Now().Unix())
-	w.WriteMsg(m)
+	// m := new(dns.Msg)
+	// m.SetReply(r)
+	// m.SetTsig(tsig.Hdr.Name, tsig.Algorithm, 300, time.Now().Unix())
+	// w.WriteMsg(m)
 
-	// doSomething()
-	// fail(w, r)
+	doSomething()
+	fail(w, r)
 }
 
 func fail(w dns.ResponseWriter, r *dns.Msg) {
