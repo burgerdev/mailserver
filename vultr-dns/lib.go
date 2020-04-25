@@ -32,41 +32,28 @@ func (h *handler) doSomething() {
 }
 
 func (h *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
-  log.Printf("new request from %s: dns.Msg%+v", w.RemoteAddr(), *r)
+	log.Printf("new request from %s: dns.Msg%+v", w.RemoteAddr(), *r)
+	m := new(dns.Msg)
+	m.SetReply(r)
 
 	tsig := r.IsTsig()
 	if tsig == nil {
 		log.Printf("request lacks TSIG")
-		// unauth(w, r)
-		// return
-	} else {
-		log.Printf("TSIG%+v", *tsig)
-	}
-	status := w.TsigStatus()
-	if status != nil {
-		log.Printf("ResponseWriter unexpectedly has a TSIG status: %v", status)
-		fail(w, r)
+		m.Rcode = dns.RcodeRefused
+		w.WriteMsg(m)
 		return
 	}
-	// m := new(dns.Msg)
-	// m.SetReply(r)
-	// m.SetTsig(tsig.Hdr.Name, tsig.Algorithm, 300, time.Now().Unix())
-	// w.WriteMsg(m)
+	log.Printf("TSIG%+v", *tsig)
+	if status := w.TsigStatus(); status != nil {
+		log.Printf("ResponseWriter unexpectedly has a TSIG status: %v", status)
+		m.Rcode = dns.RcodeServerFailure
+		w.WriteMsg(m)
+		return
+	}
 
-	doSomething()
-	fail(w, r)
-}
+	h.doSomething()
 
-func fail(w dns.ResponseWriter, r *dns.Msg) {
-	m := new(dns.Msg)
-	m.SetReply(r)
+	m.SetTsig(tsig.Hdr.Name, tsig.Algorithm, 300, time.Now().Unix())
 	m.Rcode = dns.RcodeServerFailure
-	w.WriteMsg(m)
-}
-
-func unauth(w dns.ResponseWriter, r *dns.Msg) {
-	m := new(dns.Msg)
-	m.SetReply(r)
-	m.Rcode = dns.RcodeNotAuth
 	w.WriteMsg(m)
 }
