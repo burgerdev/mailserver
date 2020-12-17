@@ -23,20 +23,6 @@ var parentDomain = mandatoryEnvVar("VULTR_PARENT_DOMAIN")
 var tsigSecret = mandatoryEnvVar("TSIG_SECRET")
 var tsigSecretName = mandatoryEnvVar("TSIG_SECRET_NAME")
 
-func registerDNSHandler(v *vultr.Client) {
-	domains, err := v.GetDNSDomains()
-	if err != nil {
-		log.Fatalf("could not list DNS domains: %v", err)
-	}
-	for _, d := range domains {
-		log.Printf("%+v", d)
-	}
-	dns.HandleFunc("burgerdev.de.", func(w dns.ResponseWriter, r *dns.Msg) {
-		log.Printf("received: dns.Msg%+v")
-
-	})
-}
-
 func serve(net string) {
 	t := map[string]string{tsigSecretName: tsigSecret}
 	server := &dns.Server{Addr: ":8053", Net: net, TsigSecret: t, ReusePort: true}
@@ -48,6 +34,13 @@ func serve(net string) {
 func main() {
 	handler := &handler{vultr.NewClient(apiKey, nil)}
 	dns.Handle(parentDomain, handler)
+	dns.HandleFunc(".", func(w dns.ResponseWriter, r *dns.Msg) {
+		log.Printf("Refusing to handle:\n\tdns.Msg%+v", *r)
+		m := new(dns.Msg)
+		m.SetReply(r)
+		m.Rcode = dns.RcodeRefused
+		w.WriteMsg(m)
+	})
 
 	go serve("tcp")
 	go serve("udp")
