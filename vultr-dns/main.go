@@ -25,7 +25,13 @@ var tsigSecretName = mandatoryEnvVar("TSIG_SECRET_NAME")
 
 func serve(net string) {
 	t := map[string]string{tsigSecretName: tsigSecret}
-	server := &dns.Server{Addr: ":8053", Net: net, TsigSecret: t, ReusePort: true}
+	server := &dns.Server{
+		Addr:          ":8053",
+		Net:           net,
+		TsigSecret:    t,
+		ReusePort:     true,
+		MsgAcceptFunc: func(dns.Header) dns.MsgAcceptAction { return dns.MsgAccept },
+	}
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("stopped serving dns: %v", err)
 	}
