@@ -5,6 +5,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 
 RUN useradd -M -U -s /usr/sbin/nologin -d /vmail -u 5000 vmail
 
-COPY dovecot/entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]

@@ -5,6 +5,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 
 RUN mkdir -p /etc/dkimkeys && chmod 700 /etc/dkimkeys
 
-COPY opendkim/entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
